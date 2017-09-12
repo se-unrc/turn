@@ -1,0 +1,2 @@
+INSERT INTO Users (username, password, email, admin) values ("juan", "123", "juan@email.com", false);
+INSERT INTO Users (username, password, email, admin) values ("pedro", "123", "pedro@email.com", false);
