@@ -5,7 +5,26 @@ Hello {{name}}
 </form>
 
 <h2>Current games</h2>
+  {{#games}}
+  <ul>
+    <li>
+      Turn {{getTurn}} <a href="/l/games/play/{{getId}}">Play</a>
+    </li>
+  </ul>
+  {{/games}}
 
-<h2>Challenges</h2>
 
-<h2>Create New Game</h2>
+<h2>Challenged</h2>
+  {{#challenged}}
+  <ul>
+    <li>
+      <form action="/l/games/accept" method="POST">
+        <label>Challenged by {{getChallenger}}
+        <input type="hidden" name="gameId" value={{getId}}>
+        <input type="submit" name="Accept" value="Accept">
+      </form>
+    </li>
+  </ul>
+  {{/challenged}}
+
+<h2><a href="/l/game/new">Create New Game</a></h2>

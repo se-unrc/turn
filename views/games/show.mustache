@@ -1,0 +1,11 @@
+{{currentUser}}
+
+{{#turn}}
+  <form action="/l/games/play/{{gameId}}" method="POST">
+    <input type="submit" name="play" value="play">
+  </form>
+{{/turn}}
+
+{{^turn}}
+  Playing the other user, wait...
+{{/turn}}

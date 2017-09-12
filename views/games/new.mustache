@@ -1,0 +1,18 @@
+<table class="info_table">
+  <tr class="tr_header">
+    <td><b>Name</b></td>
+    <td> Desafiar </td>
+  </tr>
+
+  {{#users}}
+    <tr>
+      <td>{{toString}}</td>
+      <td>
+        <form action="/l/challenge" method="POST">
+          <input type="hidden" name="userId" value={{getId}} />
+          <input type="submit" name="New Game" value="create" />
+        </form>
+      </td>
+    </tr>
+  {{/users}}
+</table>

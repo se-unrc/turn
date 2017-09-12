@@ -10,4 +10,13 @@ public class User extends Model {
     validatePresenceOf("email").message("Please, provide your email");
     validateEmailOf("email");
   }
+
+  @Override
+  public String toString() {
+    return this.getString("username");
+  }
+
+  public String getId() {
+    return this.getString("id");
+  }
 }

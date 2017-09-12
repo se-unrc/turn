@@ -1,12 +1,14 @@
 package twoUsersGame;
 
 import twoUsersGame.models.User;
+import twoUsersGame.models.Game;
 
 import org.javalite.activejdbc.Base;
 
 import static spark.Spark.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Properties;
@@ -32,9 +34,8 @@ public class App {
   public static User currentUser(Request request) {
     Session session = request.session(false);
     if (session != null) {
-      Set<String> sessionAttributes = request.session(false).attributes();
-      if (sessionAttributes.contains(SESSION_NAME))
-        return User.findById(sessionAttributes.contains(SESSION_NAME));
+      if (session.attribute(SESSION_NAME) != null)
+        return User.findById(session.attribute(SESSION_NAME));
     }
     return null;
   }
@@ -99,10 +100,92 @@ public class App {
     });
 
     get("/l/dashboard", (request, response) -> {
-        Map map = new HashMap();
-        map.put("currentUser", currentUser(request));
-        return new ModelAndView(map, "./views/dashboard.mustache");
+        User currentUser = currentUser(request);
+
+        List<Game> currentGames = Game.find("turn = ? AND state = ?", currentUser.get("id"), "running");
+        currentGames.isEmpty();
+
+        List<Game> challengedGames = Game.find("user2_id = ? AND state = ?", currentUser.get("id"), "challenged");
+        challengedGames.isEmpty();
+
+        Map attributes = new HashMap();
+        attributes.put("name", currentUser.toString());
+        attributes.put("games", currentGames);
+        attributes.put("challenged", challengedGames);
+
+        return new ModelAndView(attributes, "./views/dashboard.mustache");
       }, new MustacheTemplateEngine()
+    );
+
+    get("/l/game/new", (request, response) -> {
+        Map attributes = new HashMap();
+        List<User> users = User.findAll();
+
+        attributes.put("currentUser", currentUser(request));
+        attributes.put("users", users);
+
+        return new ModelAndView(attributes, "./views/games/new.mustache");
+      }, new MustacheTemplateEngine()
+    );
+
+    post("/l/challenge", (request, response) -> {
+      User currentUser = currentUser(request);
+      User u = User.findFirst("id = ?", request.queryParams("userId"));
+
+      if (u != null) {
+        Game g = new Game();
+        g.set("user1_id", currentUser.get("id"));
+        g.set("user2_id", u.get("id"));
+        g.set("state", "challenged");
+        g.saveIt();
+      }
+
+      response.redirect("/l/dashboard");
+      return null;
+    });
+
+    post("/l/games/accept", (request, response) -> {
+      User currentUser = currentUser(request);
+      Game g = Game.findFirst("id = ?", request.queryParams("gameId"));
+
+      if (g != null) {
+        g.set("state", "running");
+        g.set("turn", g.get("user1_id"));
+        g.saveIt();
+      }
+
+      response.redirect("/l/dashboard");
+      return null;
+    });
+
+    get("/l/games/play/:id", (request, response) -> {
+        User currentUser = currentUser(request);
+        Game g = Game.findById(request.params(":id"));
+
+        Map attributes = new HashMap();
+        attributes.put("currentUser", currentUser);
+        attributes.put("turn", g.getTurn().equals(currentUser.getId()));
+        attributes.put("gameId", g.getId());
+
+        return new ModelAndView(attributes, "./views/games/show.mustache");
+      }, new MustacheTemplateEngine()
+    );
+
+    post("/l/games/play/:id", (request, response) -> {
+        User currentUser = currentUser(request);
+        Game g = Game.findById(request.params(":id"));
+
+        if (g.getTurn().equals(currentUser.getId())) {
+          if (g.getTurn().equals(g.getString("user1_id")))
+            g.set("turn", g.getString("user2_id"));
+          else
+            g.set("turn", g.getString("user1_id"));
+        }
+        g.saveIt();
+
+        response.redirect("/l/dashboard");
+        return null;
+      }
     );
   }
 }
